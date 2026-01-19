@@ -4,6 +4,10 @@ import re
 from typing import Dict, Optional, Literal
 from pathlib import Path
 
+# Configure tesseract path for macOS Homebrew installation
+pytesseract.pytesseract.tesseract_cmd = '/opt/homebrew/bin/tesseract'
+
+
 class CrossPlatformOCRProcessor:
     """
     OCR processor for Apple Find My and Google Find My Device Network screenshots.

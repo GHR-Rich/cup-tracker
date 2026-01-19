@@ -4,6 +4,8 @@ from typing import List
 from app.database import get_db, engine
 from app.models import User, Investigation, Tracker, Location
 from app.config import get_settings
+from app.routers import upload
+
 
 settings = get_settings()
 
@@ -13,6 +15,9 @@ app = FastAPI(
     description="API for tracking plastic cups through their lifecycle",
     version="0.1.0"
 )
+
+# Include routers
+app.include_router(upload.router)
 
 @app.get("/")
 def read_root():
