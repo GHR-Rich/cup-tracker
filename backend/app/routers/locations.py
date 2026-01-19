@@ -6,6 +6,7 @@ from datetime import datetime
 from app.database import get_db
 from app.models import Location, Tracker, Investigation
 from app import schemas
+from app.services.geocoder import Geocoder
 
 router = APIRouter(prefix="/api/locations", tags=["locations"])
 
@@ -16,13 +17,7 @@ def save_location_from_ocr(
 ):
     """
     Save location data from OCR after user review/correction.
-    This is the key endpoint that connects OCR → Database.
-    
-    Workflow:
-    1. User uploads screenshot → OCR extracts data
-    2. User reviews/corrects tracker name, address, etc.
-    3. User submits this endpoint to save to database
-    4. We create/find tracker, then create location
+    Automatically geocodes address to get lat/lng coordinates.
     """
     
     # Verify investigation exists
@@ -42,22 +37,33 @@ def save_location_from_ocr(
             investigation_id=data.investigation_id,
             name=data.tracker_name,
             platform=data.platform,
-            tracker_type="atuvos"  # Default for now
+            tracker_type="atuvos"
         )
         db.add(tracker)
-        db.flush()  # Get the ID without committing yet
+        db.flush()
+    
+    # Geocode address to get coordinates
+    geocoder = Geocoder()
+    coordinates = geocoder.geocode(data.address)
+    
+    latitude = None
+    longitude = None
+    if coordinates:
+        latitude, longitude = coordinates
     
     # Create location
     location = Location(
         tracker_id=tracker.id,
         address=data.address,
+        latitude=latitude,
+        longitude=longitude,
         city=data.city,
         state=data.state,
         postal_code=data.postal_code,
         screenshot_timestamp=data.screenshot_timestamp,
         last_seen_text=data.last_seen_text,
         notes=data.notes,
-        uploaded_by=1  # Hardcoded for now (will use auth later)
+        uploaded_by=1
     )
     
     db.add(location)
@@ -65,6 +71,7 @@ def save_location_from_ocr(
     db.refresh(location)
     
     return location
+
 
 @router.get("/{location_id}", response_model=schemas.Location)
 def get_location(location_id: int, db: Session = Depends(get_db)):
@@ -90,3 +97,29 @@ def list_locations_for_tracker(
     ).limit(limit).all()
     
     return locations
+
+@router.post("/geocode/{location_id}", response_model=schemas.Location)
+def geocode_existing_location(location_id: int, db: Session = Depends(get_db)):
+    """
+    Geocode an existing location that doesn't have coordinates yet.
+    Useful for backfilling old data.
+    """
+    location = db.query(Location).filter(Location.id == location_id).first()
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    
+    if location.latitude and location.longitude:
+        return location  # Already has coordinates
+    
+    # Geocode the address
+    geocoder = Geocoder()
+    coordinates = geocoder.geocode(location.address)
+    
+    if coordinates:
+        latitude, longitude = coordinates
+        location.latitude = latitude
+        location.longitude = longitude
+        db.commit()
+        db.refresh(location)
+    
+    return location
