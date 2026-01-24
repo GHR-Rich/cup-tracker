@@ -1,4 +1,5 @@
 from fastapi import FastAPI, Depends, HTTPException
+from fastapi.middleware.cors import CORSMiddleware 
 from sqlalchemy.orm import Session
 from typing import List
 from app.database import get_db, engine
@@ -8,6 +9,7 @@ from app.routers import upload, trackers, locations  # Add trackers and location
 from app import schemas
 
 
+
 settings = get_settings()
 
 # Create FastAPI app
@@ -15,6 +17,15 @@ app = FastAPI(
     title=settings.app_name,
     description="API for tracking plastic cups through their lifecycle",
     version="0.1.0"
+)
+
+# Add CORS middleware to allow frontend to call backend
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],  # Frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # Include routers
