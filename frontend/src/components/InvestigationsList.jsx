@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import EmojiPickerModal from './EmojiPickerModal'
 import './InvestigationsList.css'
 
 const API_URL = 'http://localhost:8000'
@@ -10,6 +11,7 @@ function InvestigationsList() {
   const [locations, setLocations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
+  const [editingEmoji, setEditingEmoji] = useState(null)
 
   // Fetch trackers on component mount
   useEffect(() => {
@@ -50,6 +52,32 @@ function InvestigationsList() {
     setLocations([])
   }
 
+  const handleEmojiEdit = (tracker, e) => {
+    e.stopPropagation() // Prevent tracker card click
+    setEditingEmoji(tracker)
+  }
+
+  const handleEmojiSave = async (trackerId, emoji) => {
+    try {
+      await axios.patch(`${API_URL}/api/trackers/${trackerId}`, { emoji })
+      
+      // Update local state
+      setTrackers(trackers.map(t => 
+        t.id === trackerId ? { ...t, emoji } : t
+      ))
+      
+      // Update selected tracker if it's the one being edited
+      if (selectedTracker && selectedTracker.id === trackerId) {
+        setSelectedTracker({ ...selectedTracker, emoji })
+      }
+      
+      setEditingEmoji(null)
+    } catch (err) {
+      console.error('Error saving emoji:', err)
+      alert('Failed to save emoji: ' + err.message)
+    }
+  }
+
   if (loading) {
     return <div className="loading">Loading trackers...</div>
   }
@@ -66,10 +94,20 @@ function InvestigationsList() {
           <button onClick={handleBackToList} className="back-button">
             ← Back to Trackers
           </button>
-          <h2>
-            {selectedTracker.emoji || '📍'} {selectedTracker.name}
-          </h2>
-          <p className="platform-badge">{selectedTracker.platform}</p>
+          <div className="tracker-title">
+            <h2>
+              <span 
+                className="emoji-clickable" 
+                onClick={(e) => handleEmojiEdit(selectedTracker, e)}
+                title="Click to change emoji"
+              >
+                {selectedTracker.emoji || '📍'}
+              </span>
+              {' '}
+              {selectedTracker.name}
+            </h2>
+            <p className="platform-badge">{selectedTracker.platform}</p>
+          </div>
         </div>
 
         <div className="locations-section">
@@ -123,6 +161,14 @@ function InvestigationsList() {
             </table>
           )}
         </div>
+
+        {editingEmoji && (
+          <EmojiPickerModal
+            tracker={editingEmoji}
+            onClose={() => setEditingEmoji(null)}
+            onSave={handleEmojiSave}
+          />
+        )}
       </div>
     )
   }
@@ -145,7 +191,13 @@ function InvestigationsList() {
               className="tracker-card"
               onClick={() => handleTrackerClick(tracker)}
             >
-              <div className="tracker-emoji">{tracker.emoji || '📍'}</div>
+              <div 
+                className="tracker-emoji emoji-clickable" 
+                onClick={(e) => handleEmojiEdit(tracker, e)}
+                title="Click to change emoji"
+              >
+                {tracker.emoji || '📍'}
+              </div>
               <div className="tracker-info">
                 <h3>{tracker.name}</h3>
                 <span className="platform-badge">{tracker.platform}</span>
@@ -155,6 +207,14 @@ function InvestigationsList() {
             </div>
           ))}
         </div>
+      )}
+
+      {editingEmoji && (
+        <EmojiPickerModal
+          tracker={editingEmoji}
+          onClose={() => setEditingEmoji(null)}
+          onSave={handleEmojiSave}
+        />
       )}
     </div>
   )
