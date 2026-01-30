@@ -1,11 +1,163 @@
+import { useState, useEffect } from 'react'
+import axios from 'axios'
+import './InvestigationsList.css'
+
+const API_URL = 'http://localhost:8000'
+
 function InvestigationsList() {
+  const [trackers, setTrackers] = useState([])
+  const [selectedTracker, setSelectedTracker] = useState(null)
+  const [locations, setLocations] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+
+  // Fetch trackers on component mount
+  useEffect(() => {
+    fetchTrackers()
+  }, [])
+
+  const fetchTrackers = async () => {
+    try {
+      setLoading(true)
+      const response = await axios.get(`${API_URL}/api/trackers/investigation/4`)
+      setTrackers(response.data)
+      setError(null)
+    } catch (err) {
+      setError('Failed to load trackers: ' + err.message)
+      console.error('Error fetching trackers:', err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const fetchLocations = async (trackerId) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/locations/tracker/${trackerId}`)
+      setLocations(response.data)
+    } catch (err) {
+      setError('Failed to load locations: ' + err.message)
+      console.error('Error fetching locations:', err)
+    }
+  }
+
+  const handleTrackerClick = (tracker) => {
+    setSelectedTracker(tracker)
+    fetchLocations(tracker.id)
+  }
+
+  const handleBackToList = () => {
+    setSelectedTracker(null)
+    setLocations([])
+  }
+
+  if (loading) {
+    return <div className="loading">Loading trackers...</div>
+  }
+
+  if (error) {
+    return <div className="error">{error}</div>
+  }
+
+  // Show tracker detail view if one is selected
+  if (selectedTracker) {
     return (
-      <div>
-        <h2>Investigations</h2>
-        <p>Coming soon! You'll see all your trackers and locations here.</p>
+      <div className="investigations-container">
+        <div className="detail-header">
+          <button onClick={handleBackToList} className="back-button">
+            ← Back to Trackers
+          </button>
+          <h2>
+            {selectedTracker.emoji || '📍'} {selectedTracker.name}
+          </h2>
+          <p className="platform-badge">{selectedTracker.platform}</p>
+        </div>
+
+        <div className="locations-section">
+          <h3>Location History ({locations.length} locations)</h3>
+          {locations.length === 0 ? (
+            <p className="no-data">No locations recorded yet</p>
+          ) : (
+            <table className="locations-table">
+              <thead>
+                <tr>
+                  <th>Screenshot</th>
+                  <th>Date/Time</th>
+                  <th>Address</th>
+                  <th>City</th>
+                  <th>State</th>
+                  <th>Coordinates</th>
+                </tr>
+              </thead>
+              <tbody>
+                {locations.map((location) => (
+                  <tr key={location.id}>
+                    <td>
+                      {location.screenshots && location.screenshots.length > 0 ? (
+                        <img 
+                          src={`${API_URL}${location.screenshots[0].file_path}`}
+                          alt="Screenshot"
+                          className="location-screenshot"
+                          onClick={() => window.open(`${API_URL}${location.screenshots[0].file_path}`, '_blank')}
+                          title="Click to view full size"
+                        />
+                      ) : (
+                        <span className="no-screenshot">No image</span>
+                      )}
+                    </td>
+                    <td>
+                      {location.screenshot_timestamp
+                        ? new Date(location.screenshot_timestamp).toLocaleString()
+                        : 'N/A'}
+                    </td>
+                    <td>{location.address}</td>
+                    <td>{location.city || '-'}</td>
+                    <td>{location.state || '-'}</td>
+                    <td className="coordinates">
+                      {location.latitude && location.longitude
+                        ? `${parseFloat(location.latitude).toFixed(4)}, ${parseFloat(location.longitude).toFixed(4)}`
+                        : 'Not geocoded'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     )
   }
-  
-  export default InvestigationsList
-  
+
+  // Show trackers list view
+  return (
+    <div className="investigations-container">
+      <h2>Cup Trackers ({trackers.length})</h2>
+      <p className="subtitle">Investigation: Starbucks Cold Cups Test</p>
+
+      {trackers.length === 0 ? (
+        <div className="no-data">
+          <p>No trackers found. Upload a screenshot to get started!</p>
+        </div>
+      ) : (
+        <div className="trackers-grid">
+          {trackers.map((tracker) => (
+            <div
+              key={tracker.id}
+              className="tracker-card"
+              onClick={() => handleTrackerClick(tracker)}
+            >
+              <div className="tracker-emoji">{tracker.emoji || '📍'}</div>
+              <div className="tracker-info">
+                <h3>{tracker.name}</h3>
+                <span className="platform-badge">{tracker.platform}</span>
+                <p className="tracker-type">{tracker.tracker_type || 'airtag'}</p>
+              </div>
+              <div className="tracker-arrow">→</div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default InvestigationsList

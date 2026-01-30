@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, Numeric, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
+from datetime import datetime
 from app.database import Base
 
 class User(Base):
@@ -87,6 +88,7 @@ class Location(Base):
     is_final_destination = Column(Boolean, default=False)
     notes = Column(Text)
     uploaded_by = Column(Integer, ForeignKey('users.id'))
+    uploaded_at = Column(DateTime(timezone=True), default=datetime.utcnow)  # ADDED
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -115,6 +117,7 @@ class Screenshot(Base):
     ocr_confidence = Column(Numeric(5, 2))  # 0-100
     ocr_raw_text = Column(Text)  # Raw OCR output for debugging
     uploaded_by = Column(Integer, ForeignKey('users.id'))
+    uploaded_at = Column(DateTime(timezone=True), default=datetime.utcnow)  # ADDED
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships

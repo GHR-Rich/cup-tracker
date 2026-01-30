@@ -1,120 +1,52 @@
-import requests
-import time
 from typing import Optional, Tuple
 from decimal import Decimal
+import requests
+import time
+
 
 class Geocoder:
-    """
-    Geocoding service using Nominatim (OpenStreetMap).
-    Free tier: 1 request per second.
-    """
-    
     def __init__(self):
         self.base_url = "https://nominatim.openstreetmap.org/search"
         self.headers = {
-            'User-Agent': 'CupTrackerApp/1.0 (Investigative Research)'
+            'User-Agent': 'CupTracker/0.1 (investigating plastic cup lifecycle)'
         }
         self.last_request_time = 0
-        self.min_request_interval = 1.0  # 1 second between requests (Nominatim rate limit)
     
-    def geocode(self, address: str) -> Optional[Tuple[Decimal, Decimal]]:
+    def geocode(self, address: str) -> Optional[Tuple[Decimal, Decimal, str, str, str]]:
         """
-        Convert address to (latitude, longitude) coordinates.
-        
-        Returns:
-            Tuple of (lat, lng) as Decimal, or None if geocoding fails
+        Geocode an address and return (lat, lng, city, state, postal_code)
         """
-        if not address:
-            return None
+        # Rate limiting: 1 request per second
+        current_time = time.time()
+        time_since_last = current_time - self.last_request_time
+        if time_since_last < 1.0:
+            time.sleep(1.0 - time_since_last)
         
-        # Rate limiting - wait if necessary
-        elapsed = time.time() - self.last_request_time
-        if elapsed < self.min_request_interval:
-            time.sleep(self.min_request_interval - elapsed)
+        params = {
+            'q': address,
+            'format': 'json',
+            'limit': 1,
+            'addressdetails': 1  # Get structured address data
+        }
         
         try:
-            params = {
-                'q': address,
-                'format': 'json',
-                'limit': 1,
-                'addressdetails': 1
-            }
-            
-            response = requests.get(
-                self.base_url,
-                params=params,
-                headers=self.headers,
-                timeout=5
-            )
-            
+            response = requests.get(self.base_url, params=params, headers=self.headers)
             self.last_request_time = time.time()
             
             if response.status_code == 200:
                 data = response.json()
-                
-                if data and len(data) > 0:
+                if data:
                     result = data[0]
-                    lat = Decimal(result['lat'])
-                    lng = Decimal(result['lon'])
+                    address_details = result.get('address', {})
                     
-                    print(f"✓ Geocoded: {address} → ({lat}, {lng})")
-                    return (lat, lng)
-                else:
-                    print(f"✗ No results for: {address}")
-                    return None
-            else:
-                print(f"✗ Geocoding API error: {response.status_code}")
-                return None
-                
-        except Exception as e:
-            print(f"✗ Geocoding exception: {str(e)}")
+                    return (
+                        Decimal(result['lat']),
+                        Decimal(result['lon']),
+                        address_details.get('city') or address_details.get('town') or address_details.get('village'),
+                        address_details.get('state'),
+                        address_details.get('postcode')
+                    )
             return None
-    
-    def parse_address_components(self, address: str) -> dict:
-        """
-        Extract city, state, postal code from address using geocoding API.
-        Returns enhanced address details.
-        """
-        if not address:
-            return {}
-        
-        # Rate limiting
-        elapsed = time.time() - self.last_request_time
-        if elapsed < self.min_request_interval:
-            time.sleep(self.min_request_interval - elapsed)
-        
-        try:
-            params = {
-                'q': address,
-                'format': 'json',
-                'limit': 1,
-                'addressdetails': 1
-            }
-            
-            response = requests.get(
-                self.base_url,
-                params=params,
-                headers=self.headers,
-                timeout=5
-            )
-            
-            self.last_request_time = time.time()
-            
-            if response.status_code == 200:
-                data = response.json()
-                
-                if data and len(data) > 0:
-                    addr = data[0].get('address', {})
-                    
-                    return {
-                        'city': addr.get('city') or addr.get('town') or addr.get('village'),
-                        'state': addr.get('state'),
-                        'country': addr.get('country'),
-                        'postal_code': addr.get('postcode')
-                    }
-            
-            return {}
-            
         except Exception as e:
-            print(f"✗ Address parsing exception: {str(e)}")
-            return {}
+            print(f"Geocoding error: {e}")
+            return None

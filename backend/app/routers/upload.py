@@ -35,7 +35,7 @@ async def upload_screenshot(file: UploadFile = File(...)):
     file_path = UPLOAD_DIR / unique_filename
     
     try:
-        # Save file temporarily
+        # Save file permanently (don't delete after OCR)
         with file_path.open("wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
         
@@ -43,12 +43,13 @@ async def upload_screenshot(file: UploadFile = File(...)):
         processor = CrossPlatformOCRProcessor()
         ocr_result = processor.process_screenshot(str(file_path))
         
-        # Return results
+        # Return results with relative path for serving
         return {
             "status": "success",
             "filename": file.filename,
             "uploaded_at": datetime.now().isoformat(),
             "file_size": file_path.stat().st_size,
+            "file_path": f"/uploads/{unique_filename}",  # CHANGED: relative path for serving
             "ocr_result": {
                 "platform": ocr_result.get('platform'),
                 "tracker_name": ocr_result.get('tracker_name'),
@@ -57,8 +58,7 @@ async def upload_screenshot(file: UploadFile = File(...)):
                 "confidence": ocr_result.get('confidence'),
                 "raw_text": ocr_result.get('raw_text'),
                 "error": ocr_result.get('error')
-            },
-            "temp_file_path": str(file_path)  # So we can reference it later
+            }
         }
         
     except Exception as e:

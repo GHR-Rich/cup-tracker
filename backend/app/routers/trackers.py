@@ -40,10 +40,10 @@ def create_tracker(
     db.refresh(db_tracker)
     return db_tracker
 
-@router.get("/{tracker_id}", response_model=schemas.TrackerWithLocations)
+@router.get("/{tracker_id}", response_model=schemas.Tracker)
 def get_tracker(tracker_id: int, db: Session = Depends(get_db)):
     """
-    Get a tracker with all its location history.
+    Get a tracker by ID.
     """
     tracker = db.query(Tracker).filter(Tracker.id == tracker_id).first()
     if not tracker:
