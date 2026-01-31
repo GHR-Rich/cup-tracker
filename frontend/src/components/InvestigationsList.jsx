@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import EmojiPickerModal from './EmojiPickerModal'
+import TrackerMap from './TrackerMap'
 import './InvestigationsList.css'
 
 const API_URL = 'http://localhost:8000'
@@ -110,6 +111,10 @@ function InvestigationsList() {
           </div>
         </div>
 
+        {/* MAP VIEW */}
+        <TrackerMap locations={locations} tracker={selectedTracker} />
+
+        {/* LOCATION TABLE */}
         <div className="locations-section">
           <h3>Location History ({locations.length} locations)</h3>
           {locations.length === 0 ? (
