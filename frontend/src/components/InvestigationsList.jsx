@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import EmojiPickerModal from './EmojiPickerModal'
 import TrackerMap from './TrackerMap'
+import { generateLocationCSV, downloadCSV } from '../utils/csvExport'
 import './InvestigationsList.css'
 
 const API_URL = 'http://localhost:8000'
@@ -79,6 +80,14 @@ function InvestigationsList() {
     }
   }
 
+  const handleExportCSV = () => {
+    const csvContent = generateLocationCSV(locations, selectedTracker)
+    if (csvContent) {
+      const filename = `${selectedTracker.name.replace(/[^a-z0-9]/gi, '_')}_locations_${new Date().toISOString().split('T')[0]}.csv`
+      downloadCSV(csvContent, filename)
+    }
+  }  
+
   if (loading) {
     return <div className="loading">Loading trackers...</div>
   }
@@ -91,10 +100,16 @@ function InvestigationsList() {
   if (selectedTracker) {
     return (
       <div className="investigations-container">
-        <div className="detail-header">
-          <button onClick={handleBackToList} className="back-button">
-            ← Back to Trackers
-          </button>
+       <div className="detail-header">
+  <div className="header-actions">
+    <button onClick={handleBackToList} className="back-button">
+      ← Back to Trackers
+    </button>
+    <button onClick={handleExportCSV} className="export-button">
+      📥 Export to CSV
+    </button>
+  </div>
+
           <div className="tracker-title">
             <h2>
               <span 
@@ -226,3 +241,4 @@ function InvestigationsList() {
 }
 
 export default InvestigationsList
+
