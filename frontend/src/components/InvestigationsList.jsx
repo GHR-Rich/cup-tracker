@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 import EmojiPickerModal from './EmojiPickerModal'
 import TrackerMap from './TrackerMap'
 import Timeline from './Timeline'
@@ -74,11 +75,14 @@ function InvestigationsList() {
         setSelectedTracker({ ...selectedTracker, emoji })
       }
       
+      toast.success(`Emoji updated for ${trackers.find(t => t.id === trackerId)?.name || 'tracker'}`)
+
       setEditingEmoji(null)
     } catch (err) {
       console.error('Error saving emoji:', err)
-      alert('Failed to save emoji: ' + err.message)
+      toast.error('Failed to save emoji: ' + err.message)
     }
+    
   }
 
   const handleExportCSV = () => {
@@ -86,6 +90,7 @@ function InvestigationsList() {
     if (csvContent) {
       const filename = `${selectedTracker.name.replace(/[^a-z0-9]/gi, '_')}_locations_${new Date().toISOString().split('T')[0]}.csv`
       downloadCSV(csvContent, filename)
+      toast.success(`Exported ${locations.length} locations to CSV`)
     }
   }  
 

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import axios from 'axios'
+import toast from 'react-hot-toast'
 import './UploadPage.css'
 
 const API_URL = 'http://localhost:8000'
@@ -10,6 +11,7 @@ function UploadPage() {
   const [ocrResult, setOcrResult] = useState(null)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
   
   // Editable form data
   const [formData, setFormData] = useState({
@@ -46,19 +48,25 @@ function UploadPage() {
 
   const handleUpload = async () => {
     if (!file) return
-
+  
     setUploading(true)
     setError(null)
-
+    setUploadProgress(0)
+  
     const formDataObj = new FormData()
     formDataObj.append('file', file)
-
+  
     try {
       const response = await axios.post(`${API_URL}/api/upload/screenshot`, formDataObj, {
         headers: {
           'Content-Type': 'multipart/form-data'
+        },
+        onUploadProgress: (progressEvent) => {
+          const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+          setUploadProgress(percentCompleted)
         }
       })
+  
 
       setOcrResult(response.data)
       
@@ -110,7 +118,11 @@ function UploadPage() {
     try {
       const response = await axios.post(`${API_URL}/api/locations/from-ocr`, locationData)
       
-      alert(`✅ Saved successfully!\n\nLocation ID: ${response.data.id}\nTracker: ${response.data.tracker_id}\nCoordinates: ${response.data.latitude}, ${response.data.longitude}\n\n✅ Screenshot saved and can be deleted from phone!`)
+      toast.success(
+        `Saved! Location #${response.data.id} • ${response.data.city || 'Unknown'}, ${response.data.state || ''}`,
+        { duration: 4000 }
+      )
+      
       
       // Reset form
       setFile(null)
@@ -125,9 +137,12 @@ function UploadPage() {
       })
       setSaving(false)
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save data')
+      const errorMsg = err.response?.data?.detail || 'Failed to save location'
+      setError(errorMsg)
+      toast.error(errorMsg)
       setSaving(false)
     }
+    
   }
 
   return (
@@ -166,14 +181,29 @@ function UploadPage() {
       </div>
 
       {file && !ocrResult && (
-        <button 
-          onClick={handleUpload} 
-          disabled={uploading}
-          className="btn-primary"
-        >
-          {uploading ? '⏳ Processing...' : '🔍 Extract Data'}
-        </button>
-      )}
+  <>
+    <button 
+      onClick={handleUpload} 
+      disabled={uploading}
+      className="btn-primary"
+    >
+      {uploading ? '⏳ Processing OCR...' : '🔍 Extract Data'}
+    </button>
+    
+    {uploading && uploadProgress > 0 && (
+      <div className="progress-container">
+        <div className="progress-bar">
+          <div 
+            className="progress-fill" 
+            style={{ width: `${uploadProgress}%` }}
+          ></div>
+        </div>
+        <span className="progress-text">{uploadProgress}%</span>
+      </div>
+    )}
+  </>
+)}
+
 
       {error && (
         <div className="error-message">
@@ -283,13 +313,20 @@ function UploadPage() {
           </form>
 
           <div className="button-group">
-            <button 
-              onClick={handleSave} 
-              className="btn-primary"
-              disabled={saving || !formData.tracker_name || !formData.address}
-            >
-              {saving ? '💾 Saving...' : '✅ Save to Database'}
-            </button>
+          <button 
+  onClick={handleSave} 
+  className="btn-primary"
+  disabled={saving || !formData.tracker_name || !formData.address}
+>
+  {saving ? '💾 Saving & Geocoding...' : '✅ Save to Database'}
+</button>
+{saving && (
+  <div className="saving-indicator">
+    <div className="spinner-small"></div>
+    <span>Geocoding address and saving location...</span>
+  </div>
+)}
+
             <button onClick={() => {
               setFile(null)
               setOcrResult(null)
