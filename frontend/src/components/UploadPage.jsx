@@ -17,11 +17,10 @@ function UploadPage() {
   const [formData, setFormData] = useState({
     tracker_name: '',
     address: '',
-    last_seen_text: '',
-    city: '',
-    state: '',
-    postal_code: ''
+    screenshot_date: '',
+    location_type: 'unknown'
   })
+  
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0]
@@ -74,11 +73,10 @@ function UploadPage() {
       setFormData({
         tracker_name: response.data.ocr_result.tracker_name || '',
         address: response.data.ocr_result.address || '',
-        last_seen_text: response.data.ocr_result.last_seen || '',
-        city: '',
-        state: '',
-        postal_code: ''
+        screenshot_date: new Date().toISOString().slice(0, 16), // Default to now, user can change
+        location_type: 'unknown'
       })
+      
       
       setUploading(false)
     } catch (err) {
@@ -106,14 +104,12 @@ function UploadPage() {
       tracker_name: formData.tracker_name || "Unknown Tracker",
       platform: ocrResult.ocr_result.platform,
       address: formData.address || "",
-      last_seen_text: formData.last_seen_text,
-      city: formData.city || null,
-      state: formData.state || null,
-      postal_code: formData.postal_code || null,
-      screenshot_timestamp: new Date().toISOString(),
+      location_type: formData.location_type || 'unknown',
+      screenshot_timestamp: formData.screenshot_date ? new Date(formData.screenshot_date).toISOString() : new Date().toISOString(),
       screenshot_path: ocrResult.file_path || null,
       ocr_raw_text: JSON.stringify(ocrResult.ocr_result)
     }
+    
 
     try {
       const response = await axios.post(`${API_URL}/api/locations/from-ocr`, locationData)
@@ -130,11 +126,10 @@ function UploadPage() {
       setFormData({
         tracker_name: '',
         address: '',
-        last_seen_text: '',
-        city: '',
-        state: '',
-        postal_code: ''
+        screenshot_date: '',
+        location_type: 'unknown'
       })
+      
       setSaving(false)
     } catch (err) {
       const errorMsg = err.response?.data?.detail || 'Failed to save location'
@@ -228,89 +223,75 @@ function UploadPage() {
           </div>
 
           <form className="edit-form">
-            <div className="form-group">
-              <label htmlFor="tracker_name">
-                Tracker Name <span className="required">*</span>
-              </label>
-              <input
-                type="text"
-                id="tracker_name"
-                name="tracker_name"
-                value={formData.tracker_name}
-                onChange={handleInputChange}
-                placeholder="e.g., Sephora NYC 1"
-                required
-              />
-              <small className="field-hint">Fix emoji/OCR errors in tracker name</small>
-            </div>
+  <div className="form-group">
+    <label htmlFor="tracker_name">
+      Tracker Name <span className="required">*</span>
+    </label>
+    <input
+      type="text"
+      id="tracker_name"
+      name="tracker_name"
+      value={formData.tracker_name}
+      onChange={handleInputChange}
+      placeholder="e.g., Sephora NYC 1"
+      required
+    />
+    <small className="field-hint">Fix emoji/OCR errors in tracker name</small>
+  </div>
 
-            <div className="form-group">
-              <label htmlFor="address">
-                Address <span className="required">*</span>
-              </label>
-              <textarea
-                id="address"
-                name="address"
-                value={formData.address}
-                onChange={handleInputChange}
-                placeholder="Full address (city/state/zip auto-filled from geocoding)"
-                rows="3"
-                required
-              />
-              <small className="field-hint">City, state, and zip will be auto-populated after save</small>
-            </div>
+  <div className="form-group">
+    <label htmlFor="address">
+      Address <span className="required">*</span>
+    </label>
+    <textarea
+      id="address"
+      name="address"
+      value={formData.address}
+      onChange={handleInputChange}
+      placeholder="Full address (city/state/zip auto-filled from geocoding)"
+      rows="3"
+      required
+    />
+    <small className="field-hint">City, state, and zip will be auto-populated after save</small>
+  </div>
 
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="city">City (optional)</label>
-                <input
-                  type="text"
-                  id="city"
-                  name="city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  placeholder="Auto-filled if left blank"
-                />
-              </div>
+  <div className="form-group">
+    <label htmlFor="screenshot_date">
+      Screenshot Date & Time <span className="required">*</span>
+    </label>
+    <input
+      type="datetime-local"
+      id="screenshot_date"
+      name="screenshot_date"
+      value={formData.screenshot_date}
+      onChange={handleInputChange}
+      required
+    />
+    <small className="field-hint">When was this screenshot actually taken? (Not when you're uploading it)</small>
+  </div>
 
-              <div className="form-group">
-                <label htmlFor="state">State (optional)</label>
-                <input
-                  type="text"
-                  id="state"
-                  name="state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  placeholder="Auto-filled if left blank"
-                  maxLength="2"
-                />
-              </div>
+  <div className="form-group">
+    <label htmlFor="location_type">
+      Location Type
+    </label>
+    <select
+      id="location_type"
+      name="location_type"
+      value={formData.location_type}
+      onChange={handleInputChange}
+    >
+      <option value="unknown">Unknown/Other</option>
+      <option value="starting_point">Starting Point (Recycling Bin)</option>
+      <option value="in_transit">In Transit</option>
+      <option value="waste_transfer_station">Waste Transfer Station</option>
+      <option value="mrf">MRF (Material Recovery Facility)</option>
+      <option value="incinerator">Incinerator</option>
+      <option value="landfill">Landfill</option>
+    </select>
+    <small className="field-hint">Classify this location in the cup's journey</small>
+  </div>
+</form>
 
-              <div className="form-group">
-                <label htmlFor="postal_code">Zip Code (optional)</label>
-                <input
-                  type="text"
-                  id="postal_code"
-                  name="postal_code"
-                  value={formData.postal_code}
-                  onChange={handleInputChange}
-                  placeholder="Auto-filled if left blank"
-                />
-              </div>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="last_seen_text">Last Seen</label>
-              <input
-                type="text"
-                id="last_seen_text"
-                name="last_seen_text"
-                value={formData.last_seen_text}
-                onChange={handleInputChange}
-                placeholder="e.g., 16 minutes ago"
-              />
-            </div>
-          </form>
 
           <div className="button-group">
           <button 
@@ -333,11 +314,10 @@ function UploadPage() {
               setFormData({
                 tracker_name: '',
                 address: '',
-                last_seen_text: '',
-                city: '',
-                state: '',
-                postal_code: ''
+                screenshot_date: '',
+                location_type: 'unknown'
               })
+              
             }} className="btn-secondary">
               Cancel
             </button>
