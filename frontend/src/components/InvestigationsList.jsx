@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import axios from 'axios'
 import EmojiPickerModal from './EmojiPickerModal'
 import TrackerMap from './TrackerMap'
+import Timeline from './Timeline'
 import { generateLocationCSV, downloadCSV } from '../utils/csvExport'
 import './InvestigationsList.css'
 
@@ -128,6 +129,9 @@ function InvestigationsList() {
 
         {/* MAP VIEW */}
         <TrackerMap locations={locations} tracker={selectedTracker} />
+
+        {/* TIMELINE VIEW */}
+        <Timeline locations={locations} tracker={selectedTracker} />
 
         {/* LOCATION TABLE */}
         <div className="locations-section">
