@@ -24,6 +24,25 @@ class User(UserBase):
         from_attributes = True
 
 
+# Authentication schemas
+class UserLogin(BaseModel):
+    email: EmailStr
+    password: str
+
+
+class Token(BaseModel):
+    access_token: str
+    token_type: str
+    user: User
+
+
+class UserRegister(BaseModel):
+    email: EmailStr
+    password: str
+    full_name: Optional[str] = None
+    role: Optional[str] = "contributor"
+
+
 # Investigation schemas
 class InvestigationBase(BaseModel):
     name: str = Field(..., min_length=1, max_length=255)

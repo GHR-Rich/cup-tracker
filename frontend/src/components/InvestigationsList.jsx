@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import axios from 'axios'
 import toast from 'react-hot-toast'
+import { useAuth } from '../contexts/AuthContext'
 import EmojiPickerModal from './EmojiPickerModal'
 import TrackerMap from './TrackerMap'
 import Timeline from './Timeline'
@@ -10,6 +11,7 @@ import './InvestigationsList.css'
 const API_URL = 'http://localhost:8000'
 
 function InvestigationsList() {
+  const { token } = useAuth()
   const [trackers, setTrackers] = useState([])
   const [selectedTracker, setSelectedTracker] = useState(null)
   const [locations, setLocations] = useState([])
@@ -25,7 +27,11 @@ function InvestigationsList() {
   const fetchTrackers = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_URL}/api/trackers/investigation/4`)
+      const response = await axios.get(`${API_URL}/api/trackers/investigation/4`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       setTrackers(response.data)
       setError(null)
     } catch (err) {
@@ -38,7 +44,11 @@ function InvestigationsList() {
 
   const fetchLocations = async (trackerId) => {
     try {
-      const response = await axios.get(`${API_URL}/api/locations/tracker/${trackerId}`)
+      const response = await axios.get(`${API_URL}/api/locations/tracker/${trackerId}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       setLocations(response.data)
     } catch (err) {
       setError('Failed to load locations: ' + err.message)
@@ -63,7 +73,11 @@ function InvestigationsList() {
 
   const handleEmojiSave = async (trackerId, emoji) => {
     try {
-      await axios.patch(`${API_URL}/api/trackers/${trackerId}`, { emoji })
+      await axios.patch(`${API_URL}/api/trackers/${trackerId}`, { emoji }, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
       
       // Update local state
       setTrackers(trackers.map(t => 
@@ -147,43 +161,35 @@ function InvestigationsList() {
             <table className="locations-table">
               <thead>
                 <tr>
-                  <th>Screenshot</th>
-                  <th>Date/Time</th>
+                  <th>#</th>
+                  <th>Timestamp</th>
                   <th>Address</th>
-                  <th>City</th>
-                  <th>State</th>
-                  <th>Coordinates</th>
+                  <th>City, State</th>
+                  <th>Type</th>
+                  <th>Last Seen</th>
                 </tr>
               </thead>
               <tbody>
-                {locations.map((location) => (
+                {locations.map((location, index) => (
                   <tr key={location.id}>
+                    <td>{index + 1}</td>
                     <td>
-                      {location.screenshots && location.screenshots.length > 0 ? (
-                        <img 
-                          src={`${API_URL}${location.screenshots[0].file_path}`}
-                          alt="Screenshot"
-                          className="location-screenshot"
-                          onClick={() => window.open(`${API_URL}${location.screenshots[0].file_path}`, '_blank')}
-                          title="Click to view full size"
-                        />
-                      ) : (
-                        <span className="no-screenshot">No image</span>
-                      )}
-                    </td>
-                    <td>
-                      {location.screenshot_timestamp
-                        ? new Date(location.screenshot_timestamp).toLocaleString()
+                      {location.screenshot_timestamp 
+                        ? new Date(location.screenshot_timestamp).toLocaleString() 
                         : 'N/A'}
                     </td>
-                    <td>{location.address}</td>
-                    <td>{location.city || '-'}</td>
-                    <td>{location.state || '-'}</td>
-                    <td className="coordinates">
-                      {location.latitude && location.longitude
-                        ? `${parseFloat(location.latitude).toFixed(4)}, ${parseFloat(location.longitude).toFixed(4)}`
-                        : 'Not geocoded'}
+                    <td className="address-cell">{location.address}</td>
+                    <td>
+                      {location.city && location.state 
+                        ? `${location.city}, ${location.state}`
+                        : 'N/A'}
                     </td>
+                    <td>
+                      <span className={`type-badge ${location.location_type || 'unknown'}`}>
+                        {location.location_type || 'unknown'}
+                      </span>
+                    </td>
+                    <td>{location.last_seen_text || 'N/A'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -191,58 +197,64 @@ function InvestigationsList() {
           )}
         </div>
 
+        {/* Emoji Picker Modal */}
         {editingEmoji && (
           <EmojiPickerModal
             tracker={editingEmoji}
-            onClose={() => setEditingEmoji(null)}
             onSave={handleEmojiSave}
+            onClose={() => setEditingEmoji(null)}
           />
         )}
       </div>
     )
   }
 
-  // Show trackers list view
+  // Show list of all trackers
   return (
     <div className="investigations-container">
-      <h2>Cup Trackers ({trackers.length})</h2>
-      <p className="subtitle">Investigation: Starbucks Cold Cups Test</p>
+      <h2>Active Trackers</h2>
+      <p className="subtitle">Click on a tracker to view its journey</p>
 
-      {trackers.length === 0 ? (
-        <div className="no-data">
-          <p>No trackers found. Upload a screenshot to get started!</p>
-        </div>
-      ) : (
-        <div className="trackers-grid">
-          {trackers.map((tracker) => (
-            <div
-              key={tracker.id}
-              className="tracker-card"
-              onClick={() => handleTrackerClick(tracker)}
-            >
-              <div 
-                className="tracker-emoji emoji-clickable" 
+      <div className="trackers-grid">
+        {trackers.map(tracker => (
+          <div 
+            key={tracker.id} 
+            className="tracker-card"
+            onClick={() => handleTrackerClick(tracker)}
+          >
+            <div className="tracker-header">
+              <span 
+                className="tracker-emoji"
                 onClick={(e) => handleEmojiEdit(tracker, e)}
                 title="Click to change emoji"
               >
                 {tracker.emoji || '📍'}
-              </div>
-              <div className="tracker-info">
-                <h3>{tracker.name}</h3>
-                <span className="platform-badge">{tracker.platform}</span>
-                <p className="tracker-type">{tracker.tracker_type || 'airtag'}</p>
-              </div>
-              <div className="tracker-arrow">→</div>
+              </span>
+              <h3>{tracker.name}</h3>
             </div>
-          ))}
+            <div className="tracker-meta">
+              <span className="platform-badge">{tracker.platform}</span>
+              <span className="tracker-type">{tracker.tracker_type}</span>
+            </div>
+            {tracker.notes && (
+              <p className="tracker-notes">{tracker.notes}</p>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {trackers.length === 0 && (
+        <div className="no-data">
+          <p>No trackers found. Upload a screenshot to get started!</p>
         </div>
       )}
 
+      {/* Emoji Picker Modal */}
       {editingEmoji && (
         <EmojiPickerModal
           tracker={editingEmoji}
-          onClose={() => setEditingEmoji(null)}
           onSave={handleEmojiSave}
+          onClose={() => setEditingEmoji(null)}
         />
       )}
     </div>
@@ -250,4 +262,3 @@ function InvestigationsList() {
 }
 
 export default InvestigationsList
-

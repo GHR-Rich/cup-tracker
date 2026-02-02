@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import trackers, locations, upload
+from app.routers import trackers, locations, upload, auth
 from app.database import engine
 from app import models
 import os
@@ -30,6 +30,7 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=UPLOAD_DIR), name="uploads")
 
 # Include routers
+app.include_router(auth.router)
 app.include_router(upload.router)
 app.include_router(trackers.router)
 app.include_router(locations.router)

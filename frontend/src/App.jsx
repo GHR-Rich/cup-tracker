@@ -1,40 +1,31 @@
 import { useState } from 'react'
-import { Toaster } from 'react-hot-toast'
+import { useAuth } from './contexts/AuthContext'
 import './App.css'
+import Login from './components/Login'
 import UploadPage from './components/UploadPage'
 import InvestigationsList from './components/InvestigationsList'
+import CampaignMap from './components/CampaignMap'
 
 function App() {
   const [currentPage, setCurrentPage] = useState('upload')
+  const { user, logout, isAuthenticated, loading, isAdmin } = useAuth()
+
+  if (loading) {
+    return (
+      <div className="loading-screen">
+        <div className="spinner"></div>
+        <p>Loading...</p>
+      </div>
+    )
+  }
+
+  if (!isAuthenticated) {
+    return <Login />
+  }
 
   return (
     <div className="App">
-      <Toaster 
-        position="top-right"
-        toastOptions={{
-          duration: 4000,
-          style: {
-            background: '#363636',
-            color: '#fff',
-          },
-          success: {
-            duration: 3000,
-            iconTheme: {
-              primary: '#4CAF50',
-              secondary: '#fff',
-            },
-          },
-          error: {
-            duration: 5000,
-            iconTheme: {
-              primary: '#f44336',
-              secondary: '#fff',
-            },
-          },
-        }}
-      />
       <header className="app-header">
-  
         <h1>🥤 Cup Tracker</h1>
         <nav>
           <button 
@@ -49,12 +40,26 @@ function App() {
           >
             View Data
           </button>
+          {isAdmin() && (
+            <button 
+              onClick={() => setCurrentPage('campaign')}
+              className={currentPage === 'campaign' ? 'active' : ''}
+            >
+              Campaign Map
+            </button>
+          )}
         </nav>
+        <div className="user-info">
+          <span className="user-name">{user?.full_name || user?.email}</span>
+          <span className="user-role">{user?.role}</span>
+          <button onClick={logout} className="btn-logout">Logout</button>
+        </div>
       </header>
 
-      <main className="app-main">
+      <main>
         {currentPage === 'upload' && <UploadPage />}
         {currentPage === 'investigations' && <InvestigationsList />}
+        {currentPage === 'campaign' && isAdmin() && <CampaignMap />}
       </main>
     </div>
   )

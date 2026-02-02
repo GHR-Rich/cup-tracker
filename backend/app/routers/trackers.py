@@ -5,7 +5,8 @@ from pydantic import BaseModel
 
 from app.database import get_db
 from app.models import Tracker, Investigation
-from app import schemas
+from app import schemas, models
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/trackers", tags=["trackers"])
 
@@ -20,7 +21,8 @@ class TrackerUpdate(BaseModel):
 @router.post("", response_model=schemas.Tracker)
 def create_tracker(
     tracker: schemas.TrackerCreate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """
     Create a new tracker within an investigation.
@@ -54,7 +56,8 @@ def create_tracker(
 def update_tracker(
     tracker_id: int,
     updates: TrackerUpdate,
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
 ):
     """
     Update tracker properties (emoji, name, notes).
@@ -77,7 +80,11 @@ def update_tracker(
 
 
 @router.get("/{tracker_id}", response_model=schemas.Tracker)
-def get_tracker(tracker_id: int, db: Session = Depends(get_db)):
+def get_tracker(
+    tracker_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """
     Get a tracker by ID.
     """
@@ -88,7 +95,11 @@ def get_tracker(tracker_id: int, db: Session = Depends(get_db)):
 
 
 @router.get("/investigation/{investigation_id}", response_model=List[schemas.Tracker])
-def list_trackers_for_investigation(investigation_id: int, db: Session = Depends(get_db)):
+def list_trackers_for_investigation(
+    investigation_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
     """
     Get all trackers for a specific investigation.
     """

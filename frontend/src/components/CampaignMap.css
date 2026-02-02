@@ -1,0 +1,235 @@
+.campaign-map-container {
+    padding: 20px;
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+  
+  .campaign-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+    gap: 20px;
+  }
+  
+  .campaign-header h2 {
+    margin: 0;
+    color: #333;
+  }
+  
+  .subtitle {
+    color: #666;
+    margin: 5px 0 0 0;
+  }
+  
+  .filter-controls {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .filter-controls label {
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .filter-controls select {
+    padding: 8px 12px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 14px;
+    cursor: pointer;
+  }
+  
+  .campaign-stats {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .stat-card .stat-label {
+    font-size: 14px;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .stat-card .stat-value {
+    font-size: 24px;
+    font-weight: bold;
+  }
+  
+  .map-and-legend {
+    display: grid;
+    grid-template-columns: 250px 1fr;
+    gap: 20px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    overflow: hidden;
+  }
+  
+  .tracker-legend {
+    padding: 20px;
+    background: #f8f9fa;
+    border-right: 1px solid #e0e0e0;
+    max-height: 600px;
+    overflow-y: auto;
+  }
+  
+  .tracker-legend h3 {
+    margin-top: 0;
+    margin-bottom: 5px;
+    color: #333;
+  }
+  
+  .legend-hint {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 15px;
+  }
+  
+  .legend-tracker {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    margin-bottom: 8px;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    border: 2px solid transparent;
+  }
+  
+  .legend-tracker:hover {
+    transform: translateX(5px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+  
+  .legend-tracker.visible {
+    border-color: #4CAF50;
+    opacity: 1;
+  }
+  
+  .legend-tracker.hidden {
+    opacity: 0.4;
+    background: #f5f5f5;
+  }
+  
+  .legend-marker {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+    border: 2px solid white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  }
+  
+  .legend-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+    min-width: 0;
+  }
+  
+  .tracker-name {
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .tracker-count {
+    font-size: 12px;
+    color: #666;
+  }
+  
+  .map-wrapper {
+    position: relative;
+  }
+  
+  .map-placeholder {
+    padding: 40px;
+    text-align: center;
+    background: #f5f5f5;
+    border-radius: 12px;
+  }
+  
+  .map-placeholder h2 {
+    margin-bottom: 10px;
+  }
+  
+  .loading {
+    padding: 40px;
+    text-align: center;
+    font-size: 18px;
+    color: #666;
+  }
+  
+  .marker-popup {
+    min-width: 200px;
+  }
+  
+  .popup-header {
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  .popup-header strong {
+    font-size: 16px;
+    color: #333;
+  }
+  
+  .marker-popup p {
+    margin: 8px 0;
+    font-size: 14px;
+    color: #555;
+  }
+  
+  .marker-popup strong {
+    color: #333;
+  }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .map-and-legend {
+      grid-template-columns: 1fr;
+    }
+  
+    .tracker-legend {
+      max-height: 300px;
+      border-right: none;
+      border-bottom: 1px solid #e0e0e0;
+    }
+  
+    .campaign-header {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+  
+    .campaign-stats {
+      grid-template-columns: 1fr;
+    }
+  }
+  

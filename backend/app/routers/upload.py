@@ -1,4 +1,4 @@
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
 from typing import List
 import shutil
 from pathlib import Path
@@ -6,6 +6,8 @@ import uuid
 from datetime import datetime
 
 from app.services.ocr_processor import CrossPlatformOCRProcessor
+from app import models
+from app.auth import get_current_user
 
 router = APIRouter(prefix="/api/upload", tags=["upload"])
 
@@ -14,7 +16,10 @@ UPLOAD_DIR = Path(__file__).parent.parent.parent / "uploads"
 UPLOAD_DIR.mkdir(exist_ok=True)
 
 @router.post("/screenshot")
-async def upload_screenshot(file: UploadFile = File(...)):
+async def upload_screenshot(
+    file: UploadFile = File(...),
+    current_user: models.User = Depends(get_current_user)
+):
     """
     Upload a single screenshot for OCR processing.
     
@@ -73,7 +78,10 @@ async def upload_screenshot(file: UploadFile = File(...)):
 
 
 @router.post("/screenshots")
-async def upload_screenshots(files: List[UploadFile] = File(...)):
+async def upload_screenshots(
+    files: List[UploadFile] = File(...),
+    current_user: models.User = Depends(get_current_user)
+):
     """
     Upload multiple screenshots for batch OCR processing.
     
