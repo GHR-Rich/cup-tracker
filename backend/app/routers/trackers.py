@@ -87,10 +87,21 @@ def get_tracker(
 ):
     """
     Get a tracker by ID.
+    Contributors can only see trackers they've uploaded locations to.
     """
     tracker = db.query(Tracker).filter(Tracker.id == tracker_id).first()
     if not tracker:
         raise HTTPException(status_code=404, detail="Tracker not found")
+    
+    # Contributors can only see trackers they've contributed to
+    if current_user.role != "admin":
+        has_locations = db.query(models.Location).filter(
+            models.Location.tracker_id == tracker_id,
+            models.Location.uploaded_by == current_user.id
+        ).first()
+        if not has_locations:
+            raise HTTPException(status_code=404, detail="Tracker not found")
+    
     return tracker
 
 
@@ -102,6 +113,19 @@ def list_trackers_for_investigation(
 ):
     """
     Get all trackers for a specific investigation.
+    Admins see all trackers. Contributors only see trackers they've uploaded to.
     """
-    trackers = db.query(Tracker).filter(Tracker.investigation_id == investigation_id).all()
+    if current_user.role == "admin":
+        trackers = db.query(Tracker).filter(
+            Tracker.investigation_id == investigation_id
+        ).all()
+    else:
+        # Contributors: only trackers that have locations uploaded by them
+        trackers = db.query(Tracker).join(
+            models.Location, Tracker.id == models.Location.tracker_id
+        ).filter(
+            Tracker.investigation_id == investigation_id,
+            models.Location.uploaded_by == current_user.id
+        ).distinct().all()
+    
     return trackers

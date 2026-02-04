@@ -11,6 +11,7 @@ function UploadPage() {
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [ocrResult, setOcrResult] = useState(null)
+  const [previewUrl, setPreviewUrl] = useState(null)
   const [error, setError] = useState(null)
   const [saving, setSaving] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -30,6 +31,13 @@ function UploadPage() {
       setFile(selectedFile)
       setOcrResult(null)
       setError(null)
+
+      // Create preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+      setPreviewUrl(URL.createObjectURL(selectedFile))
+    
     }
   }
 
@@ -40,8 +48,15 @@ function UploadPage() {
       setFile(droppedFile)
       setOcrResult(null)
       setError(null)
+      
+      // Create preview URL
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl)
+      }
+      setPreviewUrl(URL.createObjectURL(droppedFile))
     }
   }
+  
 
   const handleDragOver = (e) => {
     e.preventDefault()
@@ -174,12 +189,20 @@ function UploadPage() {
           </label>
         ) : (
           <div className="file-preview">
-            <div className="file-info">
-              <span className="file-name">📄 {file.name}</span>
-              <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
-            </div>
-            <button onClick={() => setFile(null)} className="remove-file">✕</button>
-          </div>
+  <img src={previewUrl} alt="Preview" className="preview-image" />
+  <div className="file-info">
+    <span className="file-name">📄 {file.name}</span>
+    <span className="file-size">{(file.size / 1024).toFixed(1)} KB</span>
+  </div>
+  <button onClick={() => {
+    setFile(null)
+    if (previewUrl) {
+      URL.revokeObjectURL(previewUrl)
+      setPreviewUrl(null)
+    }
+  }} className="remove-file">✕</button>
+</div>
+
         )}
       </div>
 
@@ -297,6 +320,10 @@ function UploadPage() {
             <button 
               onClick={() => {
                 setFile(null)
+                if (previewUrl) {
+                  URL.revokeObjectURL(previewUrl)
+                  setPreviewUrl(null) 
+                }
                 setOcrResult(null)
                 setFormData({
                   tracker_name: '',

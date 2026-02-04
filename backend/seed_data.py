@@ -36,7 +36,7 @@ def create_test_user():
     finally:
         db.close()
 
-      def create_default_investigation():
+def create_default_investigation():
     """Create default investigation with ID 4 for initial setup."""
     db = SessionLocal()
     
