@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
-from app.routers import trackers, locations, upload, auth
+from app.routers import trackers, locations, upload, auth, users, investigations
 from app.database import engine
 from app import models
 import os
@@ -34,7 +34,8 @@ app.include_router(auth.router)
 app.include_router(upload.router)
 app.include_router(trackers.router)
 app.include_router(locations.router)
-
+app.include_router(users.router)
+app.include_router(investigations.router)
 
 @app.get("/")
 def read_root():

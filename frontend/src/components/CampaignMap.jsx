@@ -66,19 +66,42 @@ function CampaignMap() {
   const [loading, setLoading] = useState(true)
   const [visibleTrackers, setVisibleTrackers] = useState({})
   const [selectedUser, setSelectedUser] = useState('all')
-  const { token } = useAuth()
+  const [investigations, setInvestigations] = useState([])
+  const [selectedInvestigation, setSelectedInvestigation] = useState(null)
+  const [selectedState, setSelectedState] = useState('all')
+  const [selectedMonth, setSelectedMonth] = useState('all')
+  const [availableStates, setAvailableStates] = useState([])
+  const [availableMonths, setAvailableMonths] = useState([])
+  const { token, user } = useAuth()
+
+// Admin-only access
+if (user?.role !== 'admin') {
+  return (
+    <div className="access-denied">
+      <h2>🔒 Access Denied</h2>
+      <p>The Campaign Map is only available to administrators.</p>
+    </div>
+  )
+}
 
   useEffect(() => {
-    fetchCampaignData()
-  }, [selectedUser])
+    fetchInvestigations()
+    fetchUsers()
+  }, [])
 
+  useEffect(() => {
+    if (selectedInvestigation) {
+      fetchCampaignData()
+    }
+
+  }, [selectedInvestigation, selectedUser])
   const fetchCampaignData = async () => {
     setLoading(true)
     try {
       // Fetch all investigations (assuming investigation_id = 1 for now)
       // TODO: Make this dynamic to fetch all investigations
       const trackersResponse = await fetch(
-        'http://localhost:8000/api/trackers/investigation/1',
+        `http://localhost:8000/api/trackers/investigation/${selectedInvestigation}`,
         {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -117,16 +140,63 @@ function CampaignMap() {
         allLocs = allLocs.filter(loc => loc.uploaded_by === parseInt(selectedUser))
       }
 
-      // Extract unique users for filter
-      const uniqueUsers = [...new Set(allLocs.map(loc => loc.uploaded_by))]
-      setUsers(uniqueUsers)
-
+     
       setAllLocations(allLocs)
+
+      // Extract unique states for filter
+const states = [...new Set(allLocs.map(loc => loc.state).filter(Boolean))].sort()
+setAvailableStates(states)
+
+// Extract unique months for filter
+const months = [...new Set(allLocs.map(loc => {
+  if (!loc.screenshot_timestamp) return null
+  const date = new Date(loc.screenshot_timestamp)
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+}).filter(Boolean))].sort()
+setAvailableMonths(months)
+
     } catch (error) {
       console.error('Error fetching campaign data:', error)
       toast.error('Failed to load campaign data')
+      
     } finally {
       setLoading(false)
+    }
+  }
+
+  const fetchInvestigations = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/investigations', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!response.ok) throw new Error('Failed to fetch investigations')
+      const data = await response.json()
+      setInvestigations(data)
+      
+      // Auto-select first investigation if none selected
+      if (data.length > 0 && !selectedInvestigation) {
+        setSelectedInvestigation(data[0].id)
+      }
+    } catch (error) {
+      console.error('Error fetching investigations:', error)
+      toast.error('Failed to load investigations')
+    }
+  }
+
+  const fetchUsers = async () => {
+    try {
+      const response = await fetch('http://localhost:8000/api/users', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      })
+      if (!response.ok) throw new Error('Failed to fetch users')
+      const data = await response.json()
+      setUsers(data)
+    } catch (error) {
+      console.error('Error fetching users:', error)
     }
   }
 
@@ -138,9 +208,18 @@ function CampaignMap() {
   }
 
   // Filter locations to only show visible trackers and valid coordinates
-  const displayedLocations = allLocations.filter(
-    loc => loc.latitude && loc.longitude && visibleTrackers[loc.tracker.id]
-  )
+  const displayedLocations = allLocations.filter(loc => {
+    if (!loc.latitude || !loc.longitude) return false
+    if (!visibleTrackers[loc.tracker.id]) return false
+    if (selectedState !== 'all' && loc.state !== selectedState) return false
+    if (selectedMonth !== 'all') {
+      if (!loc.screenshot_timestamp) return false
+      const date = new Date(loc.screenshot_timestamp)
+      const locMonth = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`
+      if (locMonth !== selectedMonth) return false
+    }
+    return true
+  })
 
   // Calculate campaign-wide statistics
   const calculateCampaignStats = () => {
@@ -216,19 +295,62 @@ function CampaignMap() {
 
         {/* User Filter */}
         <div className="filter-controls">
-          <label htmlFor="userFilter">Filter by User:</label>
-          <select
-            id="userFilter"
-            value={selectedUser}
-            onChange={(e) => setSelectedUser(e.target.value)}
-          >
-            <option value="all">All Users</option>
-            {users.map(userId => (
-              <option key={userId} value={userId}>User {userId}</option>
-            ))}
-          </select>
-        </div>
+  <div className="filter-group">
+    <label htmlFor="investigationFilter">Investigation:</label>
+    <select
+      id="investigationFilter"
+      value={selectedInvestigation || ''}
+      onChange={(e) => setSelectedInvestigation(parseInt(e.target.value))}
+    >
+      {investigations.map(inv => (
+        <option key={inv.id} value={inv.id}>{inv.name} ({inv.brand})</option>
+      ))}
+    </select>
+  </div>
+  
+  <div className="filter-group">
+    <label htmlFor="userFilter">Filter by User:</label>
+    <select
+      id="userFilter"
+      value={selectedUser}
+      onChange={(e) => setSelectedUser(e.target.value)}
+    >
+      <option value="all">All Users</option>
+      {users.map(user => (
+  <option key={user.id} value={user.id}>{user.full_name || user.email}</option>
+))}
+    </select>
+  </div>
+  <div className="filter-group">
+  <label htmlFor="stateFilter">State:</label>
+  <select
+    id="stateFilter"
+    value={selectedState}
+    onChange={(e) => setSelectedState(e.target.value)}
+  >
+    <option value="all">All States</option>
+    {availableStates.map(state => (
+      <option key={state} value={state}>{state}</option>
+    ))}
+  </select>
+</div>
+
+<div className="filter-group">
+  <label htmlFor="monthFilter">Month:</label>
+  <select
+    id="monthFilter"
+    value={selectedMonth}
+    onChange={(e) => setSelectedMonth(e.target.value)}
+  >
+    <option value="all">All Months</option>
+    {availableMonths.map(month => (
+      <option key={month} value={month}>{month}</option>
+    ))}
+  </select>
+</div>
+</div>
       </div>
+            
 
       {/* Campaign Statistics */}
       {stats && (
@@ -364,6 +486,9 @@ function CampaignMap() {
                           {new Date(location.screenshot_timestamp).toLocaleString()}
                         </p>
                       )}
+                      {location.uploaded_by_name && (
+  <p><strong>Uploaded by:</strong> {location.uploaded_by_name}</p>
+)}
                     </div>
                   </Popup>
                 </Marker>

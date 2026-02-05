@@ -94,6 +94,12 @@ class Location(Base):
     # Relationships
     tracker = relationship("Tracker", back_populates="locations")
     screenshots = relationship("Screenshot", back_populates="location", cascade="all, delete-orphan")
+
+    uploader = relationship("User", foreign_keys=[uploaded_by])
+
+    @property
+    def uploaded_by_name(self):
+        return self.uploader.full_name if self.uploader else None
     
     # Indexes for performance
     __table_args__ = (

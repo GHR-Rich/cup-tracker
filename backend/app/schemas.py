@@ -127,6 +127,8 @@ class Location(LocationBase):
     id: int
     tracker_id: int
     uploaded_at: Optional[datetime] = None  # CHANGED: Made optional
+    uploaded_by: Optional[int] = None
+    uploaded_by_name: Optional[str] = None
     screenshots: List[Screenshot] = []
 
     class Config:
