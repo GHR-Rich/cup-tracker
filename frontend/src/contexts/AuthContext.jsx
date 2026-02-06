@@ -17,18 +17,66 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null)
   const [token, setToken] = useState(null)
   const [loading, setLoading] = useState(true)
+  
+  // Investigation state
+  const [investigations, setInvestigations] = useState([])
+  const [selectedInvestigationId, setSelectedInvestigationId] = useState(null)
+  const [investigationsLoading, setInvestigationsLoading] = useState(false)
 
   // Check for stored token on mount
   useEffect(() => {
     const storedToken = localStorage.getItem('token')
     const storedUser = localStorage.getItem('user')
+    const storedInvestigationId = localStorage.getItem('selectedInvestigationId')
 
     if (storedToken && storedUser) {
       setToken(storedToken)
       setUser(JSON.parse(storedUser))
+      if (storedInvestigationId) {
+        setSelectedInvestigationId(parseInt(storedInvestigationId))
+      }
     }
     setLoading(false)
   }, [])
+
+  // Fetch investigations when user logs in
+  useEffect(() => {
+    if (user && token) {
+      fetchInvestigations()
+    }
+  }, [user, token])
+
+  const fetchInvestigations = async () => {
+    if (!token) return
+    
+    setInvestigationsLoading(true)
+    try {
+      const response = await fetch('http://localhost:8000/api/investigations', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setInvestigations(data)
+        
+        // Auto-select first investigation if none selected
+        if (data.length > 0 && !selectedInvestigationId) {
+          selectInvestigation(data[0].id)
+        }
+      }
+    } catch (error) {
+      console.error('Failed to fetch investigations:', error)
+    } finally {
+      setInvestigationsLoading(false)
+    }
+  }
+
+  const selectInvestigation = (investigationId) => {
+    setSelectedInvestigationId(investigationId)
+    localStorage.setItem('selectedInvestigationId', investigationId.toString())
+  }
 
   const login = async (email, password) => {
     try {
@@ -95,8 +143,11 @@ export const AuthProvider = ({ children }) => {
   const logout = () => {
     localStorage.removeItem('token')
     localStorage.removeItem('user')
+    localStorage.removeItem('selectedInvestigationId')
     setToken(null)
     setUser(null)
+    setSelectedInvestigationId(null)
+    setInvestigations([])
     toast.success('Logged out successfully')
   }
 
@@ -108,6 +159,10 @@ export const AuthProvider = ({ children }) => {
     return user?.role === 'contributor'
   }
 
+  const selectedInvestigation = investigations.find(
+    inv => inv.id === selectedInvestigationId
+  )
+
   const value = {
     user,
     token,
@@ -117,8 +172,16 @@ export const AuthProvider = ({ children }) => {
     logout,
     isAdmin,
     isContributor,
-    isAuthenticated: !!token
+    isAuthenticated: !!token,
+    // Investigation management
+    investigations,
+    investigationsLoading,
+    selectedInvestigationId,
+    selectedInvestigation,
+    selectInvestigation,
+    fetchInvestigations,
   }
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
+

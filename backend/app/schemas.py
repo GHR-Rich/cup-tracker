@@ -64,6 +64,23 @@ class Investigation(InvestigationBase):
     class Config:
         from_attributes = True
 
+# Investigation User Assignment schemas
+class InvestigationUserAssign(BaseModel):
+    user_id: int
+
+class InvestigationUser(BaseModel):
+    id: int
+    investigation_id: int
+    user_id: int
+    assigned_at: datetime
+    
+    class Config:
+        from_attributes = True
+
+# Extended Investigation schema with assigned user count
+class InvestigationWithUsers(Investigation):
+    assigned_user_count: Optional[int] = 0
+
 
 # Tracker schemas
 class TrackerBase(BaseModel):

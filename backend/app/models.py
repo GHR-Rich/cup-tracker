@@ -18,6 +18,29 @@ class User(Base):
     
     # Relationships
     investigations = relationship("Investigation", back_populates="creator")
+    assigned_investigations = relationship("InvestigationUser", foreign_keys="[InvestigationUser.user_id]", back_populates="user")
+
+
+class InvestigationUser(Base):
+    """Join table linking users to investigations they're assigned to."""
+    __tablename__ = "investigation_users"
+    
+    id = Column(Integer, primary_key=True, index=True)
+    investigation_id = Column(Integer, ForeignKey('investigations.id', ondelete='CASCADE'), nullable=False)
+    user_id = Column(Integer, ForeignKey('users.id', ondelete='CASCADE'), nullable=False)
+    assigned_at = Column(DateTime(timezone=True), server_default=func.now())
+    assigned_by = Column(Integer, ForeignKey('users.id'))  # Admin who assigned them
+    
+    # Relationships
+    investigation = relationship("Investigation", back_populates="assigned_users")
+    user = relationship("User", foreign_keys=[user_id], back_populates="assigned_investigations")
+    assigner = relationship("User", foreign_keys=[assigned_by])
+    assigned_users = relationship("InvestigationUser", back_populates="investigation", cascade="all, delete-orphan")
+    
+    # Unique constraint: user can't be assigned to same investigation twice
+    __table_args__ = (
+        Index('idx_investigation_user', 'investigation_id', 'user_id', unique=True),
+    )
 
 
 class Investigation(Base):
