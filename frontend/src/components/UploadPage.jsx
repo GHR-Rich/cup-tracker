@@ -7,7 +7,7 @@ import './UploadPage.css'
 const API_URL = 'http://localhost:8000'
 
 function UploadPage() {
-  const { token } = useAuth()
+  const { token, selectedInvestigationId } = useAuth()
   const [file, setFile] = useState(null)
   const [uploading, setUploading] = useState(false)
   const [ocrResult, setOcrResult] = useState(null)
@@ -118,7 +118,7 @@ function UploadPage() {
 
     // Prepare data for saving
     const locationData = {
-      investigation_id: 4,
+      investigation_id: selectedInvestigationId,
       tracker_name: formData.tracker_name || "Unknown Tracker",
       platform: ocrResult.ocr_result.platform,
       address: formData.address || "",

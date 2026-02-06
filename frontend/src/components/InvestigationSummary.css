@@ -1,0 +1,281 @@
+/* File: frontend/src/components/InvestigationSummary.css (NEW FILE) */
+
+.summary-container {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  
+  .summary-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 1.5rem;
+  }
+  
+  .summary-header h2 {
+    margin: 0;
+    color: #2c3e50;
+  }
+  
+  .summary-subtitle {
+    color: #666;
+    margin: 0.25rem 0 0 0;
+    font-size: 1.1rem;
+  }
+  
+  .btn-export-csv {
+    padding: 0.6rem 1.2rem;
+    background: #4CAF50;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+  }
+  
+  .btn-export-csv:hover {
+    background: #45a049;
+    transform: translateY(-1px);
+  }
+  
+  /* Stats Cards */
+  .summary-stats {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+  
+  .stat-card {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 12px;
+    padding: 1.25rem;
+    text-align: center;
+  }
+  
+  .stat-number {
+    display: block;
+    font-size: 2rem;
+    font-weight: 700;
+  }
+  
+  .stat-label {
+    display: block;
+    font-size: 0.85rem;
+    opacity: 0.9;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-top: 0.25rem;
+  }
+  
+  /* Destination Breakdown */
+  .destination-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .destination-section h3 {
+    margin: 0 0 0.25rem 0;
+    color: #2c3e50;
+  }
+  
+  .section-hint {
+    color: #999;
+    font-size: 0.9rem;
+    margin: 0 0 1.25rem 0;
+  }
+  
+  .no-data-text {
+    color: #999;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .destination-bars {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .destination-row {
+    display: grid;
+    grid-template-columns: 200px 1fr 50px;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .dest-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  
+  .dest-icon {
+    font-size: 1.2rem;
+  }
+  
+  .dest-name {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #333;
+  }
+  
+  .dest-count {
+    color: #999;
+    font-size: 0.8rem;
+  }
+  
+  .dest-bar-bg {
+    background: #f0f0f0;
+    border-radius: 6px;
+    height: 24px;
+    overflow: hidden;
+  }
+  
+  .dest-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 0.5s ease;
+    min-width: 4px;
+  }
+  
+  .dest-percentage {
+    font-weight: 700;
+    font-size: 0.9rem;
+    color: #555;
+    text-align: right;
+  }
+  
+  /* State Breakdown */
+  .state-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .state-section h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+  }
+  
+  .state-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  
+  .state-chip {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.4rem 0.8rem;
+    background: #f0f4ff;
+    border: 1px solid #d0d8f0;
+    border-radius: 20px;
+  }
+  
+  .state-name {
+    font-weight: 600;
+    color: #333;
+    font-size: 0.9rem;
+  }
+  
+  .state-count {
+    background: #667eea;
+    color: white;
+    padding: 0.1rem 0.5rem;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+  }
+  
+  /* Tracker Summary Table */
+  .tracker-summary-section {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  }
+  
+  .tracker-summary-section h3 {
+    margin: 0 0 1rem 0;
+    color: #2c3e50;
+  }
+  
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+  }
+  
+  .summary-table thead {
+    background: #f8f9fa;
+  }
+  
+  .summary-table th {
+    padding: 0.75rem;
+    text-align: left;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #555;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e0e0e0;
+  }
+  
+  .summary-table td {
+    padding: 0.75rem;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 0.95rem;
+  }
+  
+  .summary-table tbody tr:hover {
+    background: #f9f9f9;
+  }
+  
+  .tracker-name-cell {
+    font-weight: 600;
+  }
+  
+  .type-pill {
+    display: inline-block;
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    white-space: nowrap;
+  }
+  
+  .no-dest {
+    color: #ccc;
+    font-style: italic;
+  }
+  
+  .error-text {
+    color: #c62828;
+  }
+  
+  @media (max-width: 600px) {
+    .summary-stats {
+      grid-template-columns: 1fr;
+    }
+  
+    .destination-row {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+  
+    .summary-header {
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+  

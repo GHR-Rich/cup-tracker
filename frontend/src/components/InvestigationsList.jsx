@@ -11,7 +11,7 @@ import './InvestigationsList.css'
 const API_URL = 'http://localhost:8000'
 
 function InvestigationsList() {
-  const { token } = useAuth()
+  const { token, selectedInvestigationId } = useAuth()
   const [trackers, setTrackers] = useState([])
   const [selectedTracker, setSelectedTracker] = useState(null)
   const [locations, setLocations] = useState([])
@@ -21,13 +21,15 @@ function InvestigationsList() {
 
   // Fetch trackers on component mount
   useEffect(() => {
-    fetchTrackers()
-  }, [])
+    if (selectedInvestigationId) {
+      fetchTrackers()
+    }
+  }, [selectedInvestigationId])
 
   const fetchTrackers = async () => {
     try {
       setLoading(true)
-      const response = await axios.get(`${API_URL}/api/trackers/investigation/4`, {
+      const response = await axios.get(`${API_URL}/api/trackers/investigation/${selectedInvestigationId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -108,6 +110,27 @@ function InvestigationsList() {
     }
   }  
 
+    // Add this after handleExportCSV function (around line 111):
+
+    const handleClassifyLocation = async (locationId, newType) => {
+      try {
+        await axios.patch(
+          `${API_URL}/api/locations/${locationId}/classify?location_type=${newType}`,
+          {},
+          { headers: { 'Authorization': `Bearer ${token}` } }
+        )
+  
+        // Update local state
+        setLocations(locations.map(loc =>
+          loc.id === locationId ? { ...loc, location_type: newType } : loc
+        ))
+  
+        toast.success(`Location classified as ${newType.replace(/_/g, ' ')}`)
+      } catch (err) {
+        toast.error('Failed to classify: ' + (err.response?.data?.detail || err.message))
+      }
+    }
+  
   if (loading) {
     return <div className="loading">Loading trackers...</div>
   }
@@ -185,10 +208,21 @@ function InvestigationsList() {
                         : 'N/A'}
                     </td>
                     <td>
-                      <span className={`type-badge ${location.location_type || 'unknown'}`}>
-                        {location.location_type || 'unknown'}
-                      </span>
+                      <select
+                        className={`type-select ${location.location_type || 'unknown'}`}
+                        value={location.location_type || 'unknown'}
+                        onChange={(e) => handleClassifyLocation(location.id, e.target.value)}
+                      >
+                        <option value="unknown">Unknown</option>
+                        <option value="starting_point">Starting Point</option>
+                        <option value="mrf">MRF (Recycling)</option>
+                        <option value="landfill">Landfill</option>
+                        <option value="incinerator">Incinerator</option>
+                        <option value="waste_transfer_station">Transfer Station</option>
+                        <option value="transit">Transit</option>
+                      </select>
                     </td>
+
                     <td>{location.last_seen_text || 'N/A'}</td>
                   </tr>
                 ))}

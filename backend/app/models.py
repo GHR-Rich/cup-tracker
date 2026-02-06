@@ -35,7 +35,6 @@ class InvestigationUser(Base):
     investigation = relationship("Investigation", back_populates="assigned_users")
     user = relationship("User", foreign_keys=[user_id], back_populates="assigned_investigations")
     assigner = relationship("User", foreign_keys=[assigned_by])
-    assigned_users = relationship("InvestigationUser", back_populates="investigation", cascade="all, delete-orphan")
     
     # Unique constraint: user can't be assigned to same investigation twice
     __table_args__ = (
@@ -60,7 +59,7 @@ class Investigation(Base):
     # Relationships
     creator = relationship("User", back_populates="investigations")
     trackers = relationship("Tracker", back_populates="investigation", cascade="all, delete-orphan")
-
+    assigned_users = relationship("InvestigationUser", back_populates="investigation", cascade="all, delete-orphan")
 
 class Tracker(Base):
     """Individual trackers (AirTags/Atuvos) within an investigation."""

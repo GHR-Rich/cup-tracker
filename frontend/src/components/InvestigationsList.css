@@ -267,3 +267,29 @@
   align-items: center;
   gap: 10px;
 }
+
+/* Add to bottom of: frontend/src/components/InvestigationsList.css */
+
+/* Location Type Select Dropdown */
+.type-select {
+  padding: 4px 8px;
+  border-radius: 12px;
+  border: 1px solid #ddd;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  appearance: auto;
+}
+
+.type-select:hover {
+  border-color: #4CAF50;
+}
+
+.type-select.unknown { background: #f5f5f5; color: #666; }
+.type-select.starting_point { background: #e3f2fd; color: #1565c0; }
+.type-select.mrf { background: #e8f5e9; color: #2e7d32; }
+.type-select.landfill { background: #fbe9e7; color: #c62828; }
+.type-select.incinerator { background: #fff3e0; color: #e65100; }
+.type-select.waste_transfer_station { background: #f3e5f5; color: #6a1b9a; }
+.type-select.transit { background: #fff8e1; color: #f57f17; }
